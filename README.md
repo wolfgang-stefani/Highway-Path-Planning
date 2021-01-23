@@ -4,14 +4,13 @@ Path planner that creates smooth, safe trajectories for an autonomous vehicle to
 ## Description
 The car safely navigate around a virtual highway with other traffic that is driving +-10 MPH off the 50 MPH speed limit. The highway has 6 lanes total - 3 heading in each direction. Each lane is 4 m wide and the car should only ever be in one of the 3 lanes on the right-hand side. The path planner is provided the car's localization and sensor fusion data. There is also a sparse map list of waypoints around the highway. The car goes as close as possible to the 50 MPH speed limit, which means passing slower traffic when possible. Other cars will try to change lanes too. The car avoids hitting other cars at all cost and is driving inside of the marked road lanes at all times, unless going from one lane to another. Also the car does not experience total acceleration over 10 m/s^2 and jerk that is greater than 10 m/s^3 so that humans feel comfortable inside the car.
 
-Point Paths: The path planner outputs a list of x and y global map coordinates. Each pair of x and y coordinates is a point, and all of the points together form a trajectory. The first waypoint has an s value of 0 because it is the starting point.
+## Point Paths
+The path planner outputs a list of x and y global map coordinates. Each pair of x and y coordinates is a point, and all of the points together form a trajectory. The first waypoint has an s value of 0 because it is the starting point.
 
-#### The map of the highway is in data/highway_map.txt
+The map of the highway is in `data/highway_map.txt`
 Each waypoint in the list contains  [x,y,s,dx,dy] values. x and y are the waypoint's map coordinate position, the s value is the distance along the road to get to that waypoint in meters, the dx and dy values define the unit normal vector pointing outward of the highway loop.
 
-The highway's waypoints loop around so the frenet s value, distance along the road, goes from 0 to 6945.554.
-
-
+The highway's waypoints loop around. So the frenet s value, distance along the road, goes from 0 to 6945.554.
 
 ## Details
 
@@ -26,14 +25,14 @@ The spline function in a single header file is really easy to use.
 
 ---
 
-### Simulator
+## Simulator
 You can download the Simulator here: [releases tab (https://github.com/udacity/self-driving-car-sim/releases/tag/T3_v1.2).  
 
 To run the simulator on Mac/Linux, first make the binary file executable with the following command:
 ```shell
 sudo chmod u+x {simulator_file_name}
 ```
-### Basic Build Instructions
+## Basic Build Instructions
 
 1. Clone this repo.
 2. Make a build directory: `mkdir build && cd build`
@@ -75,7 +74,7 @@ the path has processed since last time.
 
 ["sensor_fusion"] A 2d vector of cars and then that car's [car's unique ID, car's x position in map coordinates, car's y position in map coordinates, car's x velocity in m/s, car's y velocity in m/s, car's s position in frenet coordinates, car's d position in frenet coordinates. 
 
-### Dependencies
+## Dependencies
 
 * cmake >= 3.5
   * All OSes: [click here for installation instructions](https://cmake.org/install/)
