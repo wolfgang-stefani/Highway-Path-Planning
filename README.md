@@ -22,8 +22,8 @@ The highway's waypoints loop around. So the frenet s value, distance along the r
 
 ## Spline function
 
-A really helpful resource for doing this project and creating smooth trajectories was using the spline function from http://kluge.in-chemnitz.de/opensource/spline/
-The spline function in a single header file is really easy to use.
+For trajectory generation, I used the spline function instead of polynomial trajectory generation. One of the reasons is it is simple to use and requires no dependencies.
+This was a really helpful resource for doing this project. The spline function can be found here: http://kluge.in-chemnitz.de/opensource/spline/
 
 ---
 
