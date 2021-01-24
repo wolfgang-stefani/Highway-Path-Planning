@@ -1,7 +1,8 @@
 # Highway-Path-Planning
 Path planner that creates smooth, safe trajectories for an autonomous vehicle to follow along a 3 lane highway with traffic. The path planner is able to keep inside its lane, avoid hitting other cars, and pass slower moving traffic all by using localization, sensor fusion, and map data.
 
-[Platzhalter für ein Video von der Simulation als .gif]
+
+![](readme_data/Highway_Driving_Sim.gif)
 
 ## Description
 The car safely navigate around a virtual highway with other traffic that is driving +-10 MPH off the 50 MPH speed limit. The highway has 6 lanes total - 3 heading in each direction. Each lane is 4 m wide and the car should only ever be in one of the 3 lanes on the right-hand side. The path planner is provided the car's localization and sensor fusion data. There is also a sparse map list of waypoints around the highway. The car goes as close as possible to the 50 MPH speed limit, which means passing slower traffic when possible. Other cars will try to change lanes too. The car avoids hitting other cars at all cost and is driving inside of the marked road lanes at all times, unless going from one lane to another. Also the car does not experience total acceleration over 10 m/s^2 and jerk that is greater than 10 m/s^3 so that humans feel comfortable inside the car.
@@ -14,15 +15,13 @@ Each waypoint in the list contains  [x,y,s,dx,dy] values. x and y are the waypoi
 
 The highway's waypoints loop around. So the frenet s value, distance along the road, goes from 0 to 6945.554.
 
-## Details
+## Speed, Acceleration and Jerk
 
-1. The car uses a perfect controller and will visit every (x,y) point it receives in the list every .02 seconds. The units for the (x,y) points are in meters and the spacing between the points determines the speed of the car. The vector going from one point to the next point in the list dictates the angle of the car. Acceleration both in the tangential and normal directions is measured along with the jerk, the rate of change of total Acceleration. The (x,y) point paths that the planner receives should not have a total acceleration that goes over 10 m/s^2, also the jerk should not go over 10 m/s^3. (NOTE: As this is BETA, these requirements might change. Also currently jerk is over a .02 second interval, it would probably be better to average total acceleration over 1 second and measure jerk from that.)
-
-2. There will be some latency between the simulator running and the path planner returning a path, with optimized code usually its not very long maybe just 1-3 time steps. During this delay the simulator will continue using points that it was last given, because of this its a good idea to store the last points you have used so you can have a smooth transition. previous_path_x, and previous_path_y can be helpful for this transition since they show the last points given to the simulator controller with the processed points already removed. You would either return a path that extends this previous path or make sure to create a new path that has a smooth transition with this last path.
+The car uses a perfect controller and will visit every (x,y) point it receives in the list every .02 seconds. The units for the (x,y) points are in meters and the spacing between the points determines the speed of the car. The vector going from one point to the next point in the list dictates the angle of the car. Acceleration both in the tangential and normal directions is measured along with the jerk, the rate of change of total Acceleration. The (x,y) point paths that the planner receives do not have a total acceleration that goes over 10 m/s^2, also the jerk does not go over 10 m/s^3.
 
 ## Spline function
 
-For trajectory generation, I used the spline function instead of polynomial trajectory generation. One of the reasons is it is simple to use and requires no dependencies.
+For trajectory generation, the spline function is used instead of polynomial trajectory generation. One of the reasons is it is simple to use and requires no dependencies.
 This was a really helpful resource for doing this project. The spline function can be found here: http://kluge.in-chemnitz.de/opensource/spline/
 
 ---
