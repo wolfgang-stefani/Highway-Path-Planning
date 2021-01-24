@@ -25,8 +25,7 @@ string hasData(string s) {
 }
 
 //
-// Helper functions related to waypoints and converting from XY to Frenet
-//   or vice versa
+// Helper functions related to waypoints and converting from XY to Frenet or vice versa
 //
 
 // For converting back and forth between radians and degrees.
