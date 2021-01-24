@@ -14,8 +14,10 @@ using nlohmann::json;
 using std::string;
 using std::vector;
 
+
 class Vehicle{
-public:
+
+  public:
     int s, future_s, car_id, lane;
     float speed,d;
     // Add a flag to indicate if this car is assigned or not
@@ -23,16 +25,17 @@ public:
  
     
     void cal_mag_v(double v_x, double v_y, double prev_size){
-         speed = sqrt(v_x*v_x + v_y*v_y);
-        // Prediction the future location
-        future_s = s + prev_size * 0.02 * speed;
-        update_lane();
+      speed = sqrt(v_x*v_x + v_y*v_y);
+      
+      // Prediction the future location
+      future_s = s + prev_size * 0.02 * speed;
+      update_lane();
     }
     
     void update_lane(){
-        if( d >= 0 && d < 4) lane = 0;
-        else if (d >= 4 && d < 8) lane = 1;
-        else if (d >= 8 && d < 12) lane = 2;
+      if( d >= 0 && d < 4) lane = 0;
+      else if (d >= 4 && d < 8) lane = 1;
+      else if (d >= 8 && d < 12) lane = 2;
 
     }
 };
@@ -432,8 +435,6 @@ public:
 };
 
 
-
-
 int main() {
   uWS::Hub h;
 
@@ -491,12 +492,18 @@ int main() {
 
       auto s = hasData(data);
 
+      // autonomous driving if s != ... ? DEBUG
       if (s != "") {
         auto j = json::parse(s);
         
         string event = j[0].get<string>();
         
         if (event == "telemetry") {
+          
+          /**
+          Planner is receiving localization and sensor fusion data from the simulator ? DEBUG
+          */
+          
           // j[1] is the data JSON object
 
           // Main car's localization Data
@@ -507,108 +514,113 @@ int main() {
           double car_yaw = j[1]["yaw"];
           double car_speed = j[1]["speed"];
 
-          // Previous path data given to the Planner
+          // Previous path (path so far?) data given to the Planner
           auto previous_path_x = j[1]["previous_path_x"];
           auto previous_path_y = j[1]["previous_path_y"];
+          
           // Previous path's end s and d values
           double end_path_s = j[1]["end_path_s"];
           double end_path_d = j[1]["end_path_d"];
 
-          // Sensor Fusion Data, a list of all other cars on the same side
-          //   of the road.
+          // Sensor Fusion Data (a list of all other cars on the same side of the road)
           auto sensor_fusion = j[1]["sensor_fusion"];
 
           json msgJson;
-
+          
           vector<double> next_x_vals;
           vector<double> next_y_vals;
+          
+          double pos_x;
+          double pos_y;
+          double angle;
           int prev_size = previous_path_x.size();
           bool front_car_detected = false;
             
 
           /**
-           * TODO: define a path made up of (x,y) points that the car will visit
-           *   sequentially every .02 seconds
+           * TODO: define a path made up of (x,y) points that the car will visit sequentially every .02 seconds
            */
-            
-            // Calculate future car_s
-            vehicle_list.update_ego(car_s, car_speed,prev_size);
+          
+          // Calculate future car_s
+          vehicle_list.update_ego(car_s, car_speed,prev_size);
            
-            if (prev_size >  0) {
-                car_s = end_path_s;
-            }
+          if (prev_size >  0) {
+            car_s = end_path_s;
+          }
             
-            vector<Vehicle> temp_readings;
+          vector<Vehicle> temp_readings;
             
-            // Reading sensor fusion
-            for(int i = 0; i < sensor_fusion.size();++i){
-                float d = sensor_fusion[i][6];
-                Vehicle car;
-                car.initialize = true;
-                car.s = sensor_fusion[i][5];
-                car.car_id = sensor_fusion[i][0];
-                car.d = d;
-                car.cal_mag_v(sensor_fusion[i][3], sensor_fusion[i][4], (double) prev_size);
+          // Reading sensor fusion
+          for(int i = 0; i < sensor_fusion.size();++i){
+            float d = sensor_fusion[i][6];
+            Vehicle car;
+            car.initialize = true;
+            car.s = sensor_fusion[i][5];
+            car.car_id = sensor_fusion[i][0];
+            car.d = d;
+            car.cal_mag_v(sensor_fusion[i][3], sensor_fusion[i][4], (double) prev_size);
                 
-                // Enter 30 meters within the front car
-                if (abs(car.s-car_s) <vehicle_list.detect_range) {
+            // Enter 30 meters within the front car
+            if (abs(car.s-car_s) < vehicle_list.detect_range) {
+              
 //                    if (d < (2+4*vehicle_list.ego_lane+2) && d > (2+4*vehicle_list.ego_lane-2) && car.s > car_s && car.s-car_s <vehicle_list.detect_range){
 //                        front_car_detected = true;
 //                    }
-                    vehicle_list.append(car);
-                    temp_readings.push_back(car);
-                }
+                vehicle_list.append(car);
+                temp_readings.push_back(car);
+              }
             }
             
-            // Trace back missing sensor reading and delete out of range items
-            vehicle_list.trace_back(temp_readings, prev_size);
+          // Trace back missing sensor reading and delete out of range items
+          vehicle_list.trace_back(temp_readings, prev_size);
             
-            // Find the front cars only to see if the car is in front of us.
-            Vehicle front;
-            vehicle_list.locate_front_car(front);
-            float front_cost = vehicle_list.follow_cost(front, true,true);
+          // Find the front cars only to see if the car is in front of us.
+          Vehicle front;
+          vehicle_list.locate_front_car(front);
+          float front_cost = vehicle_list.follow_cost(front, true,true);
             
-            if (front_cost == 0) {
-                front_car_detected = false;
-                slow_down = false;
-            }
-            else {
-                front_car_detected = true;
-                std::cout<<"----Front Cost: "<<front_cost<<"\n";
-                if (front_cost > 0.9) {
-                    slow_down=true;
-                }
-                else if (front_cost < 0.5) {
-                    slow_down = false;
-                }
-            }
+          if (front_cost == 0) {
+              front_car_detected = false;
+              slow_down = false;
+          }
+          else {
+              front_car_detected = true;
+              std::cout<<"----Front Cost: "<<front_cost<<"\n";
+              if (front_cost > 0.9) {
+                  slow_down=true;
+              }
+              else if (front_cost < 0.5) {
+                  slow_down = false;
+              }
+          }
             
-            // Decision making/jumping states
-            switch (ego_state) {
+          // Decision making/jumping states
+          switch (ego_state) {
                 case 0:
+              
                     if (front_car_detected){
-                        // calculate the cost for left and right and decide which one to do
-                        std::cout<< "FSM: !!!! Front car detected"<< std::endl;
-                        int turn_result = vehicle_list.calculate_cost();
+                      // calculate the cost for left and right and decide which one to do
+                      std::cout<< "FSM: !!!! Front car detected"<< std::endl;
+                      int turn_result = vehicle_list.calculate_cost();
                         
                         
-                        if (turn_result == 1) {//1 left 2 right 0 not assigned
-                            // Jump to PLCL
-                            std::cout << "FSM: Trying left" << std::endl;
-                            ego_state = 1;
-                            fail_count = 0 ;
-                        }
-                        else if (turn_result == 2){
-                            // Jumpe to PLCR
-                            std::cout << "FSM: Trying right" << std::endl;
-                            ego_state = 2;
-                            fail_count = 0;
-                        }
+                      if (turn_result == 1) { //1 left 2 right 0 not assigned
+                        // Jump to PLCL
+                        std::cout << "FSM: Trying left" << std::endl;
+                        ego_state = 1;
+                        fail_count = 0 ;
+                      }
+                      else if (turn_result == 2) {
+                        // Jumpe to PLCR
+                        std::cout << "FSM: Trying right" << std::endl;
+                        ego_state = 2;
+                        fail_count = 0;
+                      }
                       
-                        else{
-                            ego_state = 0; //stay
-                            std::cout << "FSM: Keep lane" << std::endl;
-                        }
+                      else {
+                        ego_state = 0; //stay
+                        std::cout << "FSM: Keep lane" << std::endl;
+                      }
                     }
                 
                     break;
@@ -697,120 +709,122 @@ int main() {
                     ego_state = 0;
                     
             }
-            
-            
-            if (vehicle_list.ref_val < 49.5 && !slow_down){
+                   
+          if (vehicle_list.ref_val < 49.5 && !slow_down){
                 vehicle_list.ref_val += 0.225;
 
             }
-            else if (slow_down && vehicle_list.ref_val > vehicle_list.follow_speed){
+          else if (slow_down && vehicle_list.ref_val > vehicle_list.follow_speed){
                 vehicle_list.ref_val -= 0.225;
                 std::cout <<"------Speed Control: Slowing Down  ref val: " << vehicle_list.ref_val<<" Target_follow_speed: " << vehicle_list.follow_speed<< std::endl;
                 
                 
             }
-            else if (vehicle_list.ref_val <= vehicle_list.follow_speed){
+          else if (vehicle_list.ref_val <= vehicle_list.follow_speed){
                 slow_down = false;
                 std::cout << "------Speed Control: Reseting slow down" << std::endl;
             }
             
+          // ptsx and ptsy are the (future) way points
+          vector<double> ptsx;
+          vector<double> ptsy;
             
-            // You can move this to the N Calculation loop
+          double ref_x = car_x;
+          double ref_y = car_y;
+          double ref_yaw = deg2rad(car_yaw);
             
-            
-            vector<double> ptsx;
-            vector<double> ptsy;
-            
-            double ref_x = car_x;
-            double ref_y = car_y;
-            double ref_yaw = deg2rad(car_yaw);
-            
-            if(prev_size < 2){
-                double prev_car_x = car_x - cos(car_yaw);
-                double prev_car_y = car_y - sin(car_yaw);
+          if(prev_size < 2){
+              double prev_car_x = car_x - cos(car_yaw);
+              double prev_car_y = car_y - sin(car_yaw);
                 
-                ptsx.push_back(prev_car_x);
-                ptsx.push_back(car_x);
+              ptsx.push_back(prev_car_x);
+              ptsx.push_back(car_x);
                 
-                ptsy.push_back(prev_car_y);
-                ptsy.push_back(car_y);
-            }
-            else{
-                ref_x = previous_path_x[prev_size - 1];
-                ref_y = previous_path_y[prev_size - 1];
+              ptsy.push_back(prev_car_y);
+              ptsy.push_back(car_y);
+          }
+          
+          else {
+              ref_x = previous_path_x[prev_size - 1];
+              ref_y = previous_path_y[prev_size - 1];
                 
-                double ref_x_prev = previous_path_x[prev_size-2];
-                double ref_y_prev = previous_path_y[prev_size-2];
-                ref_yaw = atan2(ref_y-ref_y_prev, ref_x-ref_x_prev);
+              double ref_x_prev = previous_path_x[prev_size-2];
+              double ref_y_prev = previous_path_y[prev_size-2];
+              ref_yaw = atan2(ref_y-ref_y_prev, ref_x-ref_x_prev);
                 
-                ptsx.push_back(ref_x_prev);
-                ptsx.push_back(ref_x);
+              ptsx.push_back(ref_x_prev);
+              ptsx.push_back(ref_x);
                 
-                ptsy.push_back(ref_y_prev);
-                ptsy.push_back(ref_y);
+              ptsy.push_back(ref_y_prev);
+              ptsy.push_back(ref_y);
                 
-            }
-            vector<double> next_wp0 = getXY(car_s + 30, (2+4*vehicle_list.ego_lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
-            vector<double> next_wp1 = getXY(car_s + 60, (2+4*vehicle_list.ego_lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
-            vector<double> next_wp2 = getXY(car_s + 90, (2+4*vehicle_list.ego_lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
+          }
             
-            ptsx.push_back(next_wp0[0]);
-            ptsx.push_back(next_wp1[0]);
-            ptsx.push_back(next_wp2[0]);
+          // Add 3 future points to ptsx and ptsy
+          // As car_s is in frenet coordinates, we need to convert it to global x,y coordinates using the getXY function
+          vector<double> next_wp0 = getXY(car_s + 30, (2+4*vehicle_list.ego_lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
+          vector<double> next_wp1 = getXY(car_s + 60, (2+4*vehicle_list.ego_lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
+          vector<double> next_wp2 = getXY(car_s + 90, (2+4*vehicle_list.ego_lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
             
-            ptsy.push_back(next_wp0[1]);
-            ptsy.push_back(next_wp1[1]);
-            ptsy.push_back(next_wp2[1]);
+          ptsx.push_back(next_wp0[0]);
+          ptsx.push_back(next_wp1[0]);
+          ptsx.push_back(next_wp2[0]);
             
-            // Transfor the ptsx and y to 0 degree of yaw coordinate
-            for (int i = 0; i < ptsx.size();++i){
-                double shift_x = ptsx[i] - ref_x;
-                double shift_y = ptsy[i] - ref_y;
+          ptsy.push_back(next_wp0[1]);
+          ptsy.push_back(next_wp1[1]);
+          ptsy.push_back(next_wp2[1]);
+            
+          // Transform ptsx and ptsy to 0 degree of yaw coordinate
+          for (int i = 0; i < ptsx.size();++i){
+              double shift_x = ptsx[i] - ref_x;
+              double shift_y = ptsy[i] - ref_y;
                 
-                ptsx[i] = (shift_x * cos(0-ref_yaw)-shift_y*sin(0-ref_yaw));
-                ptsy[i] = (shift_x * sin(0-ref_yaw)+shift_y*cos(0-ref_yaw));
-            }
-            tk::spline s;
+              ptsx[i] = (shift_x * cos(0-ref_yaw)-shift_y*sin(0-ref_yaw));
+              ptsy[i] = (shift_x * sin(0-ref_yaw)+shift_y*cos(0-ref_yaw));
+          }
+                        
+          // Add all previous points to next_x_vals and next_y_vals
+          // This will help to get a smooth transition to the new points that we calculate later
+          for (int i = 0; i < previous_path_x.size();++i){
+              next_x_vals.push_back(previous_path_x[i]);
+              next_y_vals.push_back(previous_path_y[i]);
+          }
             
-            s.set_points(ptsx, ptsy);
+          // For trajectory generation we use the spline function instead of polynomial trajectory generation
+          tk::spline s;
+          s.set_points(ptsx, ptsy);
+          
+          // Now we need to find all spline points till the horizon (here 30m) with such a spacing that ego vehicle travels at desired speed
+          // If we know the x points (here 30m) spline is able to get the corresponding y points
+          double target_x = 30.0;
+          double target_y = s(target_x);
+          double target_dist = sqrt(target_x*target_x + target_y* target_y);
             
-            for (int i = 0; i < previous_path_x.size();++i){
-                next_x_vals.push_back(previous_path_x[i]);
-                next_y_vals.push_back(previous_path_y[i]);
-            }
+          double x_add_on = 0;
             
-            double target_x = 30.0;
-            double target_y = s(target_x);
-            double target_dist = sqrt(target_x*target_x + target_y* target_y);
-            
-            double x_add_on = 0;
-            
-            for (int i = 1; i <= 50-previous_path_x.size(); ++i) {
-                double N = (target_dist/(0.02*vehicle_list.ref_val/2.24)); // Change mph to m/s
-                double x_point = x_add_on+target_x/N;
-                double y_point = s(x_point);
+          for (int i = 1; i <= 50-previous_path_x.size(); ++i) {
+              double N = (target_dist/(0.02*vehicle_list.ref_val/2.24)); // Change mph to m/s
+              double x_point = x_add_on+target_x/N;
+              double y_point = s(x_point);
                 
-                x_add_on = x_point;
+              x_add_on = x_point;
                 
-                double x_ref = x_point;
-                double y_ref = y_point;
+              double x_ref = x_point;
+              double y_ref = y_point;
                 
-                //Rotate back to normal
-                x_point = (x_ref * cos(ref_yaw)-y_ref*sin(ref_yaw));
-                y_point = (x_ref * sin(ref_yaw)+y_ref*cos(ref_yaw));
+              //Rotate back to normal
+              x_point = (x_ref * cos(ref_yaw)-y_ref*sin(ref_yaw));
+              y_point = (x_ref * sin(ref_yaw)+y_ref*cos(ref_yaw));
                 
-                x_point += ref_x;
-                y_point += ref_y;
+              x_point += ref_x;
+              y_point += ref_y;
                 
                 
-                next_x_vals.push_back(x_point);
-                next_y_vals.push_back(y_point);
+              next_x_vals.push_back(x_point);
+              next_y_vals.push_back(y_point);
                 
-            }
-            
-            
-
-
+          }
+          
           msgJson["next_x"] = next_x_vals;
           msgJson["next_y"] = next_y_vals;
 
@@ -818,7 +832,8 @@ int main() {
 
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
         }  // end "telemetry" if
-      } else {
+      } 
+      else {
         // Manual driving
         std::string msg = "42[\"manual\",{}]";
         ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
