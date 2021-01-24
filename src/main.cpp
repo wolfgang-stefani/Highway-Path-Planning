@@ -243,7 +243,7 @@ public:
             return 0.0;
         }
         
-//        std::cout << "COST -- norm_speed:" << norm_speed <<" sensor car speed:"<< target_car_speed<<" ego speed:"<<ego_speed <<std::endl;
+      // std::cout << "COST -- norm_speed:" << norm_speed <<" sensor car speed:"<< target_car_speed<<" ego speed:"<<ego_speed <<std::endl;
         
         if (future_s){
             // if uses future value of s, car_s need to be also future value
@@ -446,7 +446,7 @@ int main() {
   vector<double> map_waypoints_dy;
 
   // Waypoint map to read from
-  string map_file_ = "../../data/highway_map.csv";
+  string map_file_ = "../data/highway_map.csv";
   // The max s value before wrapping around the track back to 0
   double max_s = 6945.554;
 
@@ -790,7 +790,10 @@ int main() {
               next_y_vals.push_back(previous_path_y[i]);
           }
             
-          // For trajectory generation we use the spline function instead of polynomial trajectory generation
+          // Interpolating Points
+          // The spline function interpolates points between known waypoints.
+          // There are also other methods you could use like Bezier curve fitting or fitting polynomials.
+          // For trajectory generation we use the spline function instead of polynomial trajectory generation.
           tk::spline s;
           s.set_points(ptsx, ptsy);
           
