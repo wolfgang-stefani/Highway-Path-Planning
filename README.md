@@ -5,8 +5,9 @@ Path planner that creates smooth, safe trajectories for an autonomous vehicle to
 ![](readme_data/Highway_Driving_Sim.gif)
 
 ## Description
-The car safely navigate around a virtual highway with other traffic that is driving +-10 MPH off the 50 MPH speed limit. The highway has 6 lanes total - 3 heading in each direction. Each lane is 4 m wide and the car should only ever be in one of the 3 lanes on the right-hand side. The path planner is provided the car's localization and sensor fusion data. There is also a sparse map list of waypoints around the highway. The car goes as close as possible to the 50 MPH speed limit, which means passing slower traffic when possible. Other cars will try to change lanes too. The car avoids hitting other cars at all cost and is driving inside of the marked road lanes at all times, unless going from one lane to another. Also the car does not experience total acceleration over 10 m/s^2 and jerk that is greater than 10 m/s^3 so that humans feel comfortable inside the car.
+The car safely navigates around a virtual highway with other traffic that is driving +-10 MPH off the 50 MPH speed limit. The highway has 6 lanes total - 3 heading in each direction. Each lane is 4 m wide and the car should only ever be in one of the 3 lanes on the right-hand side. The path planner is provided the car's localization and sensor fusion data. There is also a sparse map list of waypoints around the highway. The car goes as close as possible to the 50 MPH speed limit, which means passing slower traffic when possible. Other cars will try to change lanes too. The car avoids hitting other cars at all cost and is driving inside of the marked road lanes at all times, unless going from one lane to another. Also the car does not experience total acceleration over 10 m/s^2 and jerk that is greater than 10 m/s^3 so that humans feel comfortable inside the car.
 
+---
 ## Point Paths
 The path planner outputs a list of x and y global map coordinates. Each pair of x and y coordinates is a point, and all of the points together form a trajectory. The first waypoint has an s value of 0 because it is the starting point.
 
@@ -23,6 +24,14 @@ The car uses a perfect controller and will visit every (x,y) point it receives i
 
 For trajectory generation, the spline function is used instead of polynomial trajectory generation. One of the reasons is it is simple to use and requires no dependencies.
 This was a really helpful resource for doing this project. The spline function can be found here: http://kluge.in-chemnitz.de/opensource/spline/
+
+## Class definitions in the Code
+
+Two classes are defined, one is `Vehicle` and one is `List_Vehicle`.
+
+`Vehicle` contains or calculates all the necessary data to describe an object of the class car like its **position** (in frenet coordinates s and d), **id**, **lane** and **speed**. Furthermore the class provides two functions, one to **calculate the speed** in dependence of lateral + logitudinal speed and one to **predict the future position** in dependence of the speed calculated before.
+
+`List_Vehicle`contains `vector<Vehicle>`and all the data related to the ego vehicle like the speed `ego_speed` or the predicted position `ego_future_s`. All the functions that process sensor readings are in this class. Also cost function calculations are included.
 
 ---
 
